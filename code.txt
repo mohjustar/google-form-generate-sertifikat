@@ -1,0 +1,40 @@
+function onFormSubmit(e) {
+  // Ambil data dari form submission
+  const form = FormApp.getActiveForm();
+  let formResponses = form.getResponses();
+  let latestFR = formResponses[form.getResponses().length - 1];
+
+
+  const itemResponses = latestFR.getItemResponses()
+  let email = itemResponses[0].getResponse();
+  let nama = itemResponses[1].getResponse();
+
+
+  var file = DriveApp.getFileById("ID google doc lo");
+  var copy = file.makeCopy(nama + " - Certificate");
+  var copiedTemplateId = copy.getId();
+  let doc = DocumentApp.openById(copiedTemplateId);
+  var body = doc.getBody();
+	
+  //di google doc lo perlu ada 1 text yang akan menjadi text yang di replace, contoh yang gw pake adalah {{name}}
+  body.replaceText('{{Name}}', nama);
+
+  doc.saveAndClose();
+
+  // Simpan sertifikat sebagai PDF
+  var pdf = doc.getAs('application/pdf');
+  console.log("pedeef", pdf)
+ 
+
+  // Kirim sertifikat ke email peserta
+  GmailApp.sendEmail(email, "Your Attendance Certificate", "Dear " + nama + ",\n\nTerimakasih atas kehadiran Anda, silakan download sertifikat Anda.", {
+    attachments: [pdf]
+  });
+
+  // Hapus dokumen salinan setelah dikirim
+  DriveApp.getFileById(copiedTemplateId).setTrashed(true);
+
+  response = { status: "success" };
+  return ContentService.createTextOutput(JSON.stringify(response));
+
+}
